@@ -17,37 +17,49 @@ end
 
 ## Usage
 
-### Authentication
+### Automatic Configuration (Recommended)
 
-The client supports multiple ways to configure your API key:
+The easiest way to use HospitableClient is with automatic configuration. Set your API key in a `.env` file or environment variable:
+
+```bash
+# .env file
+HOSPITABLE_API_KEY=your-hospitable-api-key
+
+# Or export as environment variable
+export HOSPITABLE_API_KEY="your-hospitable-api-key"
+```
+
+Then use the API functions directly without passing configuration:
+
+```elixir
+# API functions automatically use configured credentials
+{:ok, properties} = HospitableClient.get_properties()
+{:ok, reservations} = HospitableClient.get_reservations(include: "guest")
+{:ok, messages} = HospitableClient.get_messages("reservation-uuid")
+```
+
+### Manual Configuration
+
+For more control, you can still configure the client manually:
 
 #### 1. Direct API Key
 
 ```elixir
 # Create a client with your API key
 client = HospitableClient.new("your-hospitable-api-key")
+
+# Use with explicit configuration
+{:ok, properties} = HospitableClient.get_properties(client)
 ```
 
 #### 2. From Environment Configuration
 
-Set your API key via application configuration:
-
 ```elixir
-# In your config/config.exs
-config :ex_hospitable, api_key: "your-hospitable-api-key"
-
-# Then create the client
+# Load from environment/config
 {:ok, client} = HospitableClient.from_env()
-```
 
-Or via environment variable:
-
-```bash
-export HOSPITABLE_API_KEY="your-hospitable-api-key"
-```
-
-```elixir
-{:ok, client} = HospitableClient.from_env()
+# Use with explicit configuration
+{:ok, reservations} = HospitableClient.get_reservations(client, include: "guest")
 ```
 
 ### Generating Authentication Headers
@@ -100,34 +112,32 @@ This client library provides comprehensive support for the Hospitable API endpoi
 ### Quick Start Examples
 
 ```elixir
-# Get reservations
-{:ok, reservations} = HospitableClient.get_reservations(client,
+# With automatic configuration (recommended)
+{:ok, reservations} = HospitableClient.get_reservations(
   properties: ["property-uuid"],
   include: "guest,financials"
 )
 
-# Search properties
-{:ok, results} = HospitableClient.search_properties(client,
+{:ok, results} = HospitableClient.search_properties(
   adults: 2,
-  start_date: "2024-08-16",
+  start_date: "2024-08-16", 
   end_date: "2024-08-21"
 )
 
-# Get all properties
-{:ok, properties} = HospitableClient.get_properties(client,
+{:ok, properties} = HospitableClient.get_properties(
   include: "details,bookings"
 )
 
-# Get reservation messages
-{:ok, messages} = HospitableClient.get_messages(client,
-  "reservation-uuid"
-)
+{:ok, messages} = HospitableClient.get_messages("reservation-uuid")
 
-# Send a message
-{:ok, response} = HospitableClient.send_message(client,
+{:ok, response} = HospitableClient.send_message(
   "reservation-uuid",
   body: "Hello! Your check-in is at 3 PM."
 )
+
+# With manual configuration
+client = HospitableClient.new("your-api-key")
+{:ok, reservations} = HospitableClient.get_reservations(client, include: "guest")
 ```
 
 For comprehensive usage examples and interactive shell demonstrations, see [EXAMPLES.md](EXAMPLES.md).
@@ -136,10 +146,19 @@ For comprehensive usage examples and interactive shell demonstrations, see [EXAM
 
 The client checks for API keys in the following order:
 
-1. Application configuration: `config :ex_hospitable, api_key: "..."`
-2. Environment variable: `HOSPITABLE_API_KEY`
+1. **Manual configuration** passed to functions (highest priority)
+2. **Application configuration**: `config :ex_hospitable, api_key: "..."`  
+3. **Environment variable**: `HOSPITABLE_API_KEY`
+4. **.env file**: Automatically loaded in development/test environments
 
-Application configuration takes precedence over environment variables.
+## Features
+
+- **Automatic configuration loading** - Set API key once via environment, use everywhere
+- **Manual configuration override** - Still supports explicit client configuration
+- **Comprehensive API coverage** - Reservations, Properties, and Messages endpoints
+- **Type safety** - Full Elixir typespecs for all functions and return types
+- **Error handling** - Structured error responses for all failure scenarios
+- **Development friendly** - Automatic .env file loading in dev/test environments
 
 ## Documentation
 

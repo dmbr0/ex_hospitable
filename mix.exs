@@ -19,7 +19,8 @@ defmodule HospitableClient.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :httpoison]
+      extra_applications: [:logger, :httpoison],
+      mod: {HospitableClient.Application, []}
     ]
   end
 
@@ -28,6 +29,7 @@ defmodule HospitableClient.MixProject do
     [
       {:httpoison, "~> 2.0"},
       {:jason, "~> 1.4"},
+      {:dotenv_parser, "~> 2.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
   end
@@ -44,7 +46,7 @@ defmodule HospitableClient.MixProject do
         "Documentation" => "https://hexdocs.pm/ex_hospitable"
       },
       maintainers: ["Alex Whitney"],
-      files: ~w(lib mix.exs README.md EXAMPLES.md LICENSE CLAUDE.md)
+      files: ~w(lib config mix.exs README.md EXAMPLES.md LICENSE CLAUDE.md)
     ]
   end
 
@@ -61,7 +63,8 @@ defmodule HospitableClient.MixProject do
         ],
         "Configuration": [
           HospitableClient.Auth,
-          HospitableClient.Config
+          HospitableClient.Config,
+          HospitableClient.Application
         ]
       ]
     ]

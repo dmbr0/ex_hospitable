@@ -162,136 +162,207 @@ defmodule HospitableClient do
   @doc """
   Gets multiple reservations with optional filtering and pagination.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Reservations.get_reservations/2`.
 
   ## Examples
 
+      # Using automatic configuration (requires HOSPITABLE_API_KEY env var)
+      iex> HospitableClient.get_reservations(
+      iex>   include: "financials,guest"
+      iex> )
+      {:error, :api_key_not_configured}
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, reservations} = HospitableClient.get_reservations(client,
-      iex> #   properties: ["prop-uuid"],
-      iex> #   include: "financials,guest"
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec get_reservations(Config.config(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_reservations(config, opts \\ []) do
+  @spec get_reservations(Config.config() | keyword(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_reservations(config_or_opts \\ [], opts \\ [])
+  
+  def get_reservations(config, opts) when is_map(config) do
     HospitableClient.Reservations.get_reservations(config, opts)
+  end
+  
+  def get_reservations(opts, []) when is_list(opts) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Reservations.get_reservations(config, opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
   Gets a specific reservation by UUID.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Reservations.get_reservation/3`.
 
   ## Examples
 
+      # Using automatic configuration (requires HOSPITABLE_API_KEY env var)
+      iex> HospitableClient.get_reservation(
+      iex>   "6f58fd0a-a9cb-3746-9219-384a156ff7bb",
+      iex>   include: "financials,guest"
+      iex> )
+      {:error, :api_key_not_configured}
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, reservation} = HospitableClient.get_reservation(client,
-      iex> #   "6f58fd0a-a9cb-3746-9219-384a156ff7bb",
-      iex> #   include: "financials,guest"
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec get_reservation(Config.config(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_reservation(config, uuid, opts \\ []) do
+  @spec get_reservation(Config.config() | String.t(), String.t() | keyword(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_reservation(config_or_uuid, uuid_or_opts \\ [], opts \\ [])
+  
+  def get_reservation(config, uuid, opts) when is_map(config) and is_binary(uuid) do
     HospitableClient.Reservations.get_reservation(config, uuid, opts)
+  end
+  
+  def get_reservation(uuid, opts, []) when is_binary(uuid) and is_list(opts) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Reservations.get_reservation(config, uuid, opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
   Gets all properties with optional pagination and includes.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Properties.get_properties/2`.
 
   ## Examples
 
+      # Using automatic configuration (requires HOSPITABLE_API_KEY env var)
+      iex> HospitableClient.get_properties(
+      iex>   page: 1,
+      iex>   per_page: 50
+      iex> )
+      {:error, :api_key_not_configured}
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, properties} = HospitableClient.get_properties(client,
-      iex> #   include: "user,listings,details",
-      iex> #   page: 1,
-      iex> #   per_page: 50
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec get_properties(Config.config(), keyword()) :: {:ok, map()} | {:error, term()}
-  def get_properties(config, opts \\ []) do
+  @spec get_properties(Config.config() | keyword(), keyword()) :: {:ok, map()} | {:error, term()}
+  def get_properties(config_or_opts \\ [], opts \\ [])
+  
+  def get_properties(config, opts) when is_map(config) do
     HospitableClient.Properties.get_properties(config, opts)
+  end
+  
+  def get_properties(opts, []) when is_list(opts) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Properties.get_properties(config, opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
   Searches for available properties based on dates and guest requirements.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Properties.search_properties/2`.
 
   ## Examples
 
+      # Using automatic configuration (requires HOSPITABLE_API_KEY env var)
+      iex> HospitableClient.search_properties(
+      iex>   adults: 2,
+      iex>   start_date: "2025-08-16",
+      iex>   end_date: "2025-08-21"
+      iex> )
+      {:error, :api_key_not_configured}
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, results} = HospitableClient.search_properties(client,
-      iex> #   adults: 2,
-      iex> #   children: 1,
-      iex> #   start_date: "2024-08-16",
-      iex> #   end_date: "2024-08-21",
-      iex> #   include: "listings,details"
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec search_properties(Config.config(), keyword()) :: {:ok, map()} | {:error, term()}
-  def search_properties(config, opts \\ []) do
+  @spec search_properties(Config.config() | keyword(), keyword()) :: {:ok, map()} | {:error, term()}
+  def search_properties(config_or_opts \\ [], opts \\ [])
+  
+  def search_properties(config, opts) when is_map(config) do
     HospitableClient.Properties.search_properties(config, opts)
+  end
+  
+  def search_properties(opts, []) when is_list(opts) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Properties.search_properties(config, opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
   Gets all messages for a specific reservation.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Messages.get_messages/2`.
 
   ## Examples
 
+      # Using automatic configuration requires HOSPITABLE_API_KEY env var
+      iex> is_function(&HospitableClient.get_messages/1)
+      true
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, messages} = HospitableClient.get_messages(client,
-      iex> #   "becd1474-ccd1-40bf-9ce8-04456bfa338d"
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec get_messages(Config.config(), String.t()) :: {:ok, map()} | {:error, term()}
-  def get_messages(config, reservation_uuid) do
+  @spec get_messages(Config.config() | String.t(), String.t() | nil) :: {:ok, map()} | {:error, term()}
+  def get_messages(config_or_uuid, reservation_uuid \\ nil)
+  
+  def get_messages(config, reservation_uuid) when is_map(config) and is_binary(reservation_uuid) do
     HospitableClient.Messages.get_messages(config, reservation_uuid)
+  end
+  
+  def get_messages(reservation_uuid, nil) when is_binary(reservation_uuid) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Messages.get_messages(config, reservation_uuid)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
   Sends a message to a reservation conversation.
 
+  If no config is provided, uses the automatically loaded configuration from environment.
   Delegates to `HospitableClient.Messages.send_message/3`.
 
   ## Examples
 
+      # Using automatic configuration (requires HOSPITABLE_API_KEY env var)
+      iex> HospitableClient.send_message(
+      iex>   "becd1474-ccd1-40bf-9ce8-04456bfa338d",
+      iex>   body: "Hello, guest!\\nYour check-in is at 3 PM."
+      iex> )
+      {:error, :api_key_not_configured}
+
+      # Using manual configuration
       iex> client = HospitableClient.new("api-key")
-      iex> # This would make an actual API request:
-      iex> # {:ok, response} = HospitableClient.send_message(client,
-      iex> #   "becd1474-ccd1-40bf-9ce8-04456bfa338d",
-      iex> #   body: "Hello, guest!\\nYour check-in is at 3 PM.",
-      iex> #   images: ["https://example.com/photo1.jpg"]
-      iex> # )
       iex> client.api_key
       "api-key"
 
   """
-  @spec send_message(Config.config(), String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def send_message(config, reservation_uuid, opts \\ []) do
+  @spec send_message(Config.config() | String.t(), String.t() | keyword(), keyword()) :: {:ok, map()} | {:error, term()}
+  def send_message(config_or_uuid, reservation_uuid_or_opts \\ [], opts \\ [])
+  
+  def send_message(config, reservation_uuid, opts) when is_map(config) and is_binary(reservation_uuid) do
     HospitableClient.Messages.send_message(config, reservation_uuid, opts)
+  end
+  
+  def send_message(reservation_uuid, opts, []) when is_binary(reservation_uuid) and is_list(opts) do
+    case HospitableClient.Application.get_client_config() do
+      {:ok, config} -> HospitableClient.Messages.send_message(config, reservation_uuid, opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 end
