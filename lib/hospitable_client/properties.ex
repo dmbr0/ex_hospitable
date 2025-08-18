@@ -69,7 +69,7 @@ defmodule HospitableClient.Properties do
             "picture" => "https://example.com/image.jpg",
             "address" => %{
               "number" => "32",
-              "street" => "Senefelderplatz", 
+              "street" => "Senefelderplatz",
               "city" => "Berlin",
               "state" => "Berlin",
               "country" => "DE",
@@ -86,7 +86,7 @@ defmodule HospitableClient.Properties do
             "description" => "Beautiful property...",
             "summary" => "Perfect for vacation...",
             "check-in" => "15:00",
-            "check-out" => "11:00", 
+            "check-out" => "11:00",
             "currency" => "EUR",
             "capacity" => %{"max" => 4, "bedrooms" => 2, "beds" => 2, "bathrooms" => 1},
             # ... more fields
@@ -204,18 +204,18 @@ defmodule HospitableClient.Properties do
     with {:ok, validated_opts} <- validate_options(opts) do
       per_page = Map.get(validated_opts, :per_page, 100)
       max_pages = Map.get(validated_opts, :max_pages, 50)
-      
+
       # Ensure per_page doesn't exceed API limit
       per_page = min(per_page, 100)
-      
+
       initial_opts = validated_opts
       |> Map.put(:page, 1)
       |> Map.put(:per_page, per_page)
-      
+
       case get_properties(initial_opts) do
         {:ok, first_response} ->
           fetch_remaining_pages(first_response, validated_opts, per_page, max_pages, 1)
-          
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -247,10 +247,10 @@ defmodule HospitableClient.Properties do
   def list_amenities(%{"data" => properties}) when is_list(properties) do
     list_amenities(properties)
   end
-  
+
   def list_amenities(properties) when is_list(properties) do
     properties
-    |> Enum.flat_map(fn property -> 
+    |> Enum.flat_map(fn property ->
       Map.get(property, "amenities", [])
     end)
     |> Enum.uniq()
@@ -338,7 +338,7 @@ defmodule HospitableClient.Properties do
 
   - `properties` - List of properties or response map
   - `center_lat` - Center latitude
-  - `center_lon` - Center longitude  
+  - `center_lon` - Center longitude
   - `radius` - Search radius
   - `unit` - Unit for radius (default: `:km`, options: `:km`, `:miles`)
 
@@ -349,12 +349,14 @@ defmodule HospitableClient.Properties do
       [%{"id" => "...", "address" => %{...}}, ...]
 
   """
-  @spec find_nearby(map() | list(), float(), float(), float(), atom()) :: list(map())
-  def find_nearby(%{"data" => properties}, center_lat, center_lon, radius, unit \\ :km) when is_list(properties) do
-    find_nearby(properties, center_lat, center_lon, radius, unit)
-  end
+@spec find_nearby(map() | list(), float(), float(), float(), atom()) :: list(map())
+def find_nearby(properties, center_lat, center_lon, radius, unit \\ :km)
 
-  def find_nearby(properties, center_lat, center_lon, radius, unit) when is_list(properties) do
+def find_nearby(%{"data" => properties}, center_lat, center_lon, radius, unit) when is_list(properties) do
+  find_nearby(properties, center_lat, center_lon, radius, unit)
+end
+
+def find_nearby(properties, center_lat, center_lon, radius, unit) when is_list(properties) do
     properties
     |> Enum.filter(fn property ->
       case extract_coordinates(property) do
@@ -410,12 +412,12 @@ defmodule HospitableClient.Properties do
   ## Examples
 
       iex> {:ok, response} = HospitableClient.Properties.get_properties()
-      
+
       # Location-based filtering with coordinates
       iex> nearby_berlin = HospitableClient.Properties.filter_properties(response, %{
         within_radius: %{lat: 52.5200, lon: 13.4050, radius: 10, unit: :km}
       })
-      
+
       # Advanced filtering
       iex> luxury_properties = HospitableClient.Properties.filter_properties(response, %{
         currency: "USD",
@@ -429,7 +431,7 @@ defmodule HospitableClient.Properties do
   def filter_properties(%{"data" => properties}, filters) when is_list(properties) do
     filter_properties(properties, filters)
   end
-  
+
   def filter_properties(properties, filters) when is_list(properties) and is_map(filters) do
     Enum.filter(properties, fn property ->
       passes_all_filters?(property, filters)
@@ -462,7 +464,7 @@ defmodule HospitableClient.Properties do
 
   def group_properties(properties, group_by) when is_list(properties) and is_atom(group_by) do
     field_name = Atom.to_string(group_by)
-    
+
     case group_by do
       :city -> group_by_nested_field(properties, ["address", "city"])
       :state -> group_by_nested_field(properties, ["address", "state"])
@@ -502,12 +504,12 @@ defmodule HospitableClient.Properties do
 
   defp validate_include_option(opts) do
     case Map.get(opts, :include) do
-      nil -> 
+      nil ->
         {:ok, opts}
       include_string when is_binary(include_string) ->
         includes = String.split(include_string, ",", trim: true)
         invalid_includes = includes -- @valid_includes
-        
+
         if Enum.empty?(invalid_includes) do
           {:ok, opts}
         else
@@ -521,7 +523,7 @@ defmodule HospitableClient.Properties do
   defp validate_uuid(uuid) when is_binary(uuid) do
     # UUID v4 regex pattern
     uuid_pattern = ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    
+
     if Regex.match?(uuid_pattern, uuid) do
       {:ok, uuid}
     else
@@ -548,17 +550,17 @@ defmodule HospitableClient.Properties do
     # Haversine formula
     dlat = lat2_rad - lat1_rad
     dlon = lon2_rad - lon1_rad
-    
-    a = :math.pow(:math.sin(dlat / 2), 2) + 
+
+    a = :math.pow(:math.sin(dlat / 2), 2) +
         :math.cos(lat1_rad) * :math.cos(lat2_rad) * :math.pow(:math.sin(dlon / 2), 2)
     c = 2 * :math.atan2(:math.sqrt(a), :math.sqrt(1 - a))
-    
+
     # Earth's radius
     radius = case unit do
       :km -> 6371.0
       :miles -> 3959.0
     end
-    
+
     # Calculate distance
     distance = radius * c
     Float.round(distance, 1)
@@ -575,11 +577,11 @@ defmodule HospitableClient.Properties do
   defp fetch_remaining_pages(first_response, opts, per_page, max_pages, current_page) do
     all_data = first_response["data"] || []
     all_included = first_response["included"] || []
-    
+
     meta = first_response["meta"] || %{}
     total = Map.get(meta, "total", 0)
     total_pages = ceil(total / per_page)
-    
+
     if current_page >= total_pages or current_page >= max_pages do
       # We have all pages or hit the safety limit
       {:ok, %{
@@ -597,7 +599,7 @@ defmodule HospitableClient.Properties do
       next_opts = opts
       |> Map.put(:page, next_page)
       |> Map.put(:per_page, per_page)
-      
+
       case get_properties(next_opts) do
         {:ok, next_response} ->
           # Combine data from both responses
@@ -606,9 +608,9 @@ defmodule HospitableClient.Properties do
             "included" => all_included ++ (next_response["included"] || []),
             "meta" => next_response["meta"] || %{}
           }
-          
+
           fetch_remaining_pages(combined_response, opts, per_page, max_pages, next_page)
-          
+
         {:error, reason} ->
           # Return what we have so far
           {:ok, %{

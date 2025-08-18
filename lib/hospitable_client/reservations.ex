@@ -55,11 +55,6 @@ defmodule HospitableClient.Reservations do
   # Valid date query options
   @valid_date_queries ~w(checkin checkout)
 
-  # Valid platforms
-  @valid_platforms ~w(airbnb homeaway booking direct manual)
-
-  # Valid stay types
-  @valid_stay_types ~w(guest_stay owner_stay)
 
   @doc """
   Retrieves a paginated list of reservations.
@@ -127,7 +122,7 @@ defmodule HospitableClient.Reservations do
 
   ## Default Behavior
 
-  If no date filters are provided, the API defaults to reservations with 
+  If no date filters are provided, the API defaults to reservations with
   check-in dates in the next 2 weeks.
 
   """
@@ -175,18 +170,18 @@ defmodule HospitableClient.Reservations do
     with {:ok, validated_opts} <- validate_options(opts) do
       per_page = Map.get(validated_opts, :per_page, 100)
       max_pages = Map.get(validated_opts, :max_pages, 20)
-      
+
       # Ensure per_page doesn't exceed API limit
       per_page = min(per_page, 100)
-      
+
       initial_opts = validated_opts
       |> Map.put(:page, 1)
       |> Map.put(:per_page, per_page)
-      
+
       case get_reservations(initial_opts) do
         {:ok, first_response} ->
           fetch_remaining_pages(first_response, validated_opts, per_page, max_pages, 1)
-          
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -232,7 +227,7 @@ defmodule HospitableClient.Reservations do
 
   def list_statuses(reservations) when is_list(reservations) do
     reservations
-    |> Enum.map(fn reservation -> 
+    |> Enum.map(fn reservation ->
       case get_in(reservation, ["reservation_status"]) do
         %{"status" => status} -> status
         status when is_binary(status) -> status
@@ -291,7 +286,7 @@ defmodule HospitableClient.Reservations do
   end
 
   def total_revenue(reservations, currency) when is_list(reservations) do
-    revenue_by_currency = 
+    revenue_by_currency =
       reservations
       |> Enum.reduce(%{}, fn reservation, acc ->
         case extract_revenue(reservation) do
@@ -342,18 +337,18 @@ defmodule HospitableClient.Reservations do
   ## Examples
 
       iex> {:ok, response} = HospitableClient.Reservations.get_reservations(%{properties: ["uuid"]})
-      
+
       # Filter by platform
       iex> airbnb_reservations = HospitableClient.Reservations.filter_reservations(response, %{
         platform: "airbnb"
       })
-      
+
       # Filter by date range
       iex> february_arrivals = HospitableClient.Reservations.filter_reservations(response, %{
         arriving_after: ~D[2024-02-01],
         arriving_before: ~D[2024-02-29]
       })
-      
+
       # Filter by stay length and revenue
       iex> long_valuable_stays = HospitableClient.Reservations.filter_reservations(response, %{
         min_nights: 7,
@@ -404,17 +399,17 @@ defmodule HospitableClient.Reservations do
 
   def group_reservations(reservations, group_by) when is_list(reservations) and is_atom(group_by) do
     case group_by do
-      :platform -> 
+      :platform ->
         Enum.group_by(reservations, fn r -> Map.get(r, "platform", "unknown") end)
-      :month -> 
+      :month ->
         Enum.group_by(reservations, &extract_arrival_month/1)
-      :year -> 
+      :year ->
         Enum.group_by(reservations, &extract_arrival_year/1)
-      :property_id -> 
+      :property_id ->
         Enum.group_by(reservations, &extract_property_id/1)
-      :status -> 
+      :status ->
         Enum.group_by(reservations, &extract_status/1)
-      field_name -> 
+      field_name ->
         field_str = Atom.to_string(field_name)
         Enum.group_by(reservations, fn r -> Map.get(r, field_str, "unknown") end)
     end
@@ -515,12 +510,12 @@ defmodule HospitableClient.Reservations do
 
   defp validate_include_option(opts) do
     case Map.get(opts, :include) do
-      nil -> 
+      nil ->
         {:ok, opts}
       include_string when is_binary(include_string) ->
         includes = String.split(include_string, ",", trim: true)
         invalid_includes = includes -- @valid_includes
-        
+
         if Enum.empty?(invalid_includes) do
           {:ok, opts}
         else
@@ -533,7 +528,7 @@ defmodule HospitableClient.Reservations do
 
   defp validate_date_query_option(opts) do
     case Map.get(opts, :date_query) do
-      nil -> 
+      nil ->
         {:ok, opts}
       date_query when date_query in @valid_date_queries ->
         {:ok, opts}
@@ -544,10 +539,10 @@ defmodule HospitableClient.Reservations do
 
   defp validate_date_format(opts) do
     date_fields = [:start_date, :end_date]
-    
+
     Enum.reduce_while(date_fields, {:ok, opts}, fn field, {:ok, acc_opts} ->
       case Map.get(acc_opts, field) do
-        nil -> 
+        nil ->
           {:cont, {:ok, acc_opts}}
         date_string when is_binary(date_string) ->
           case Date.from_iso8601(date_string) do
@@ -576,7 +571,7 @@ defmodule HospitableClient.Reservations do
     # Handle other parameters
     other_params = opts
     |> Map.drop([:properties])
-    |> Map.take([:conversation_id, :date_query, :end_date, :include, :last_message_at, 
+    |> Map.take([:conversation_id, :date_query, :end_date, :include, :last_message_at,
                  :page, :per_page, :platform_id, :start_date])
     |> Enum.into(%{}, fn {key, value} -> {Atom.to_string(key), value} end)
     |> Enum.reject(fn {_key, value} -> is_nil(value) end)
@@ -588,11 +583,11 @@ defmodule HospitableClient.Reservations do
   defp fetch_remaining_pages(first_response, opts, per_page, max_pages, current_page) do
     all_data = first_response["data"] || []
     all_included = first_response["included"] || []
-    
+
     meta = first_response["meta"] || %{}
     total = Map.get(meta, "total", 0)
     total_pages = ceil(total / per_page)
-    
+
     if current_page >= total_pages or current_page >= max_pages do
       # We have all pages or hit the safety limit
       {:ok, %{
@@ -610,7 +605,7 @@ defmodule HospitableClient.Reservations do
       next_opts = opts
       |> Map.put(:page, next_page)
       |> Map.put(:per_page, per_page)
-      
+
       case get_reservations(next_opts) do
         {:ok, next_response} ->
           # Combine data from both responses
@@ -619,9 +614,9 @@ defmodule HospitableClient.Reservations do
             "included" => all_included ++ (next_response["included"] || []),
             "meta" => next_response["meta"] || %{}
           }
-          
+
           fetch_remaining_pages(combined_response, opts, per_page, max_pages, next_page)
-          
+
         {:error, reason} ->
           # Return what we have so far
           {:ok, %{
@@ -748,7 +743,7 @@ defmodule HospitableClient.Reservations do
       financials ->
         currency = Map.get(financials, "currency", "USD")
         nights = Map.get(reservation, "nights", 1)
-        
+
         %{
           currency: currency,
           nights: nights,
@@ -779,7 +774,7 @@ defmodule HospitableClient.Reservations do
 
   defp merge_financial_data(acc, financial_data) do
     currency = financial_data.currency
-    
+
     Map.update(acc, currency, financial_data, fn existing ->
       %{
         currency: currency,
@@ -797,7 +792,7 @@ defmodule HospitableClient.Reservations do
     Enum.into(financial_data, %{}, fn {currency, data} ->
       nights = data.nights
       count = Map.get(data, :reservation_count, 1)
-      
+
       averages = %{
         "total_revenue" => data.revenue,
         "total_guest_fees" => data.guest_fees,
@@ -807,7 +802,7 @@ defmodule HospitableClient.Reservations do
         "reservation_count" => count,
         "total_nights" => nights
       }
-      
+
       {currency, averages}
     end)
   end
@@ -847,7 +842,7 @@ defmodule HospitableClient.Reservations do
       date_string when is_binary(date_string) ->
         case DateTime.from_iso8601(date_string) do
           {:ok, datetime, _offset} -> {:ok, DateTime.to_date(datetime)}
-          {:error, _} -> 
+          {:error, _} ->
             case Date.from_iso8601(date_string) do
               {:ok, date} -> {:ok, date}
               error -> error
