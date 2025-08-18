@@ -162,6 +162,15 @@ defmodule HospitableClient do
   This is a convenience function that delegates to `HospitableClient.Properties.get_properties/1`.
   For more advanced property operations, use the `HospitableClient.Properties` module directly.
 
+  ## Available Include Options
+
+  - `"user"` - Include property owner information
+  - `"listings"` - Include platform listings (requires listing:read scope)
+  - `"details"` - Include detailed property information  
+  - `"bookings"` - Include booking policies and rules
+
+  Multiple includes can be combined: `"user,listings,details,bookings"`
+
   ## Examples
 
       iex> HospitableClient.get_properties()
@@ -170,7 +179,7 @@ defmodule HospitableClient do
       iex> HospitableClient.get_properties(%{page: 2, per_page: 25})
       {:ok, %{"data" => [...], "meta" => %{"current_page" => 2}}}
 
-      iex> HospitableClient.get_properties(%{include: "listings,user"})
+      iex> HospitableClient.get_properties(%{include: "user,listings,details"})
       {:ok, %{"data" => [...], "included" => [...]}}
 
   """
@@ -180,21 +189,34 @@ defmodule HospitableClient do
   end
 
   @doc """
-  Retrieves a single property by ID.
+  Retrieves a single property by UUID.
 
   This is a convenience function that delegates to `HospitableClient.Properties.get_property/2`.
+
+  ## Parameters
+
+  - `property_uuid` - Valid UUID string for the property
+  - `opts` - Optional map with include options
 
   ## Examples
 
       iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
-      {:ok, %{"data" => %{"id" => "550e8400-e29b-41d4-a716-446655440000", ...}}}
+      {:ok, %{"id" => "550e8400-e29b-41d4-a716-446655440000", ...}}
 
-      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000", %{include: "listings"})
-      {:ok, %{"data" => %{...}, "included" => [...]}}
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000", %{include: "user,listings"})
+      {:ok, %{"id" => "...", "user" => %{...}, "listings" => [...]}}
+
+  ## Errors
+
+      iex> HospitableClient.get_property("invalid-uuid")
+      {:error, :invalid_uuid}
+
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
+      {:error, {:not_found, %{"message" => "Property not found"}}}
 
   """
   @spec get_property(String.t(), map()) :: {:ok, map()} | {:error, term()}
-  def get_property(property_id, opts \\ %{}) do
-    Properties.get_property(property_id, opts)
+  def get_property(property_uuid, opts \\ %{}) do
+    Properties.get_property(property_uuid, opts)
   end
 end
