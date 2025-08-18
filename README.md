@@ -63,18 +63,18 @@ HospitableClient.authenticated?()
   per_page: 25
 })
 
-# Get properties with included resources
+# Get properties with included resources (API specification compliant)
 {:ok, properties} = HospitableClient.get_properties(%{
-  include: "listings,user,details"
+  include: "user,listings,details,bookings"
 })
 
-# Get single property
+# Get single property by UUID
 {:ok, property} = HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
 
-# Get single property with includes
+# Get single property with all includes
 {:ok, property} = HospitableClient.get_property(
   "550e8400-e29b-41d4-a716-446655440000",
-  %{include: "listings"}
+  %{include: "user,listings,details,bookings"}
 )
 
 # Create a new property
@@ -117,6 +117,19 @@ The `HospitableClient.Properties` module provides specialized functions for prop
 amenities = HospitableClient.Properties.list_amenities(response)
 # => ["wifi", "kitchen", "parking", "pool", ...]
 
+# Extract property types and currencies
+property_types = HospitableClient.Properties.list_property_types(response)
+currencies = HospitableClient.Properties.list_currencies(response)
+
+# Calculate distance between properties (using coordinates)
+prop1 = response["data"] |> List.first()
+prop2 = response["data"] |> List.last()
+{:ok, distance_km} = HospitableClient.Properties.distance_between(prop1, prop2, :km)
+{:ok, distance_miles} = HospitableClient.Properties.distance_between(prop1, prop2, :miles)
+
+# Find properties near specific coordinates (10km radius around Berlin)
+nearby_berlin = HospitableClient.Properties.find_nearby(response, 52.5200, 13.4050, 10, :km)
+
 # Filter properties (client-side)
 berlin_properties = HospitableClient.Properties.filter_properties(response, %{
   city: "Berlin"
@@ -138,11 +151,18 @@ pet_friendly_villas = HospitableClient.Properties.filter_properties(response, %{
   min_bedrooms: 3
 })
 
+# Location-based filtering with coordinates
+nearby_properties = HospitableClient.Properties.filter_properties(response, %{
+  within_radius: %{lat: 52.5200, lon: 13.4050, radius: 50, unit: :km}
+})
+
+# Ultra-luxury property search
 luxury_properties = HospitableClient.Properties.filter_properties(response, %{
   currency: "USD",
   has_amenities: ["pool", "gym", "concierge"],
   events_allowed: true,
-  min_capacity: 8
+  min_capacity: 8,
+  within_radius: %{lat: 40.7589, lon: -73.9851, radius: 25, unit: :miles}
 })
 ```
 
@@ -159,6 +179,7 @@ luxury_properties = HospitableClient.Properties.filter_properties(response, %{
 - `:city` - Filter by city name (case insensitive)
 - `:state` - Filter by state/region name (case insensitive)
 - `:country` - Filter by country code (case insensitive)
+- `:within_radius` - Filter by distance from coordinates `%{lat: float, lon: float, radius: float, unit: :km/:miles}`
 
 **Capacity Filters:**
 - `:min_capacity` - Filter by minimum guest capacity
@@ -244,13 +265,16 @@ The authentication state is managed by a GenServer that provides:
 ### Properties Module: `HospitableClient.Properties`
 
 - `get_properties/1` - Get paginated list of properties with full options
-- `get_property/2` - Get single property by ID with options
+- `get_property/2` - Get single property by UUID with options
 - `get_all_properties/1` - Get all properties across all pages
 - `list_amenities/1` - Extract unique amenities from properties
 - `list_property_types/1` - Extract unique property types from properties
 - `list_currencies/1` - Extract unique currencies from properties
 - `filter_properties/2` - Filter properties by various criteria
 - `group_properties/2` - Group properties by a specific field
+- `distance_between/3` - Calculate distance between two properties
+- `find_nearby/5` - Find properties within radius of coordinates
+- `valid_uuid?/1` - Validate UUID format
 
 ### Authentication: `HospitableClient.Auth.Manager`
 

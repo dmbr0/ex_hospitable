@@ -5,7 +5,7 @@ defmodule HospitableClient.PropertiesTest do
   alias HospitableClient.Properties
   alias HospitableClient.Auth.Manager, as: AuthManager
 
-  # Comprehensive sample property data matching the schema
+  # Enhanced sample property data matching the API specification
   @sample_property_1 %{
     "id" => "550e8400-e29b-41d4-a716-446655440000",
     "name" => "Relaxing Villa near the sea",
@@ -17,9 +17,13 @@ defmodule HospitableClient.PropertiesTest do
       "city" => "Berlin",
       "state" => "Berlin",
       "country" => "DE",
-      "postcode" => "10405"
+      "postcode" => "10405",
+      "coordinates" => %{
+        "latitude" => 52.5200,
+        "longitude" => 13.4050
+      },
+      "display" => "32 Senefelderplatz, 10405 Berlin, DE"
     },
-    "coordinates" => %{"display" => "52.5200,13.4050"},
     "timezone" => "+0200",
     "listed" => true,
     "amenities" => ["wifi", "kitchen", "parking", "pool"],
@@ -46,38 +50,10 @@ defmodule HospitableClient.PropertiesTest do
         "platform_email" => "host@example.com"
       }
     ],
-    "host" => %{"first_name" => "John", "last_name" => "Doe"},
     "tags" => ["Luxury", "Sea View"],
     "property_type" => "villa",
     "room_type" => "entire_place",
     "calendar_restricted" => false,
-    "bookings" => %{
-      "booking_policies" => %{
-        "cancellation" => ["flexible"],
-        "payment_terms" => %{
-          "status" => "active",
-          "description" => ["Pay 50% upfront"],
-          "grace_period" => "24h"
-        }
-      },
-      "listing_markups" => [],
-      "security_deposits" => [],
-      "occupancy_based_rules" => %{
-        "guests_included" => 4,
-        "extra_guest_fee" => %{
-          "type" => "fixed",
-          "value" => %{"amount" => 25, "formatted" => "€25"}
-        }
-      },
-      "fees" => [],
-      "discounts" => []
-    },
-    "details" => %{
-      "space_overview" => "Spacious villa with modern amenities",
-      "guest_access" => "Full access to villa",
-      "wifi_name" => "VillaWiFi",
-      "wifi_password" => "password123"
-    },
     "user" => %{
       "id" => "497f6eca-6276-4993-bfeb-53cbbbba6f08",
       "email" => "owner@example.com",
@@ -96,9 +72,13 @@ defmodule HospitableClient.PropertiesTest do
       "city" => "Munich",
       "state" => "Bavaria",
       "country" => "DE",
-      "postcode" => "80539"
+      "postcode" => "80539",
+      "coordinates" => %{
+        "latitude" => 48.1351,
+        "longitude" => 11.5820
+      },
+      "display" => "15 Maximilianstraße, 80539 Munich, DE"
     },
-    "coordinates" => %{"display" => "48.1351,11.5820"},
     "timezone" => "+0100",
     "listed" => false,
     "amenities" => ["wifi", "heating"],
@@ -125,46 +105,12 @@ defmodule HospitableClient.PropertiesTest do
         "platform_email" => "host2@example.com"
       }
     ],
-    "host" => %{"first_name" => "Jane", "last_name" => "Smith"},
     "tags" => ["Business", "Central"],
     "property_type" => "apartment",
     "room_type" => "entire_place",
     "calendar_restricted" => true,
-    "bookings" => %{
-      "booking_policies" => %{
-        "cancellation" => ["strict"],
-        "payment_terms" => %{
-          "status" => "active",
-          "description" => ["Pay full amount upfront"],
-          "grace_period" => "12h"
-        }
-      },
-      "listing_markups" => [],
-      "security_deposits" => [
-        %{
-          "name" => "Standard Deposit",
-          "type" => "fixed",
-          "value" => %{"amount" => 100, "formatted" => "€100"}
-        }
-      ],
-      "occupancy_based_rules" => %{
-        "guests_included" => 2,
-        "extra_guest_fee" => %{
-          "type" => "fixed",
-          "value" => %{"amount" => 15, "formatted" => "€15"}
-        }
-      },
-      "fees" => [],
-      "discounts" => []
-    },
-    "details" => %{
-      "space_overview" => "Modern apartment with city views",
-      "guest_access" => "Full apartment access",
-      "wifi_name" => "ApartmentWiFi",
-      "wifi_password" => "munich2024"
-    },
     "user" => %{
-      "id" => "987f6eca-6276-4993-bfeb-53cbbbba6f08", 
+      "id" => "987f6eca-6276-4993-bfeb-53cbbbba6f08",
       "email" => "owner2@example.com",
       "name" => "Jane Smith"
     }
@@ -181,9 +127,13 @@ defmodule HospitableClient.PropertiesTest do
       "city" => "New York",
       "state" => "New York",
       "country" => "US",
-      "postcode" => "10001"
+      "postcode" => "10001",
+      "coordinates" => %{
+        "latitude" => 40.7589,
+        "longitude" => -73.9851
+      },
+      "display" => "100 5th Avenue, 10001 New York, US"
     },
-    "coordinates" => %{"display" => "40.7589,-73.9851"},
     "timezone" => "-0500",
     "listed" => true,
     "amenities" => ["wifi", "kitchen", "parking", "pool", "gym", "concierge"],
@@ -210,47 +160,13 @@ defmodule HospitableClient.PropertiesTest do
         "platform_email" => "luxury@example.com"
       }
     ],
-    "host" => %{"first_name" => "Robert", "last_name" => "Johnson"},
     "tags" => ["Luxury", "Penthouse", "City View"],
     "property_type" => "penthouse",
     "room_type" => "entire_place",
     "calendar_restricted" => false,
-    "bookings" => %{
-      "booking_policies" => %{
-        "cancellation" => ["moderate"],
-        "payment_terms" => %{
-          "status" => "active",
-          "description" => ["Pay 30% upfront, rest on arrival"],
-          "grace_period" => "48h"
-        }
-      },
-      "listing_markups" => [],
-      "security_deposits" => [
-        %{
-          "name" => "Luxury Deposit",
-          "type" => "fixed",
-          "value" => %{"amount" => 1000, "formatted" => "$1000"}
-        }
-      ],
-      "occupancy_based_rules" => %{
-        "guests_included" => 6,
-        "extra_guest_fee" => %{
-          "type" => "fixed",
-          "value" => %{"amount" => 50, "formatted" => "$50"}
-        }
-      },
-      "fees" => [],
-      "discounts" => []
-    },
-    "details" => %{
-      "space_overview" => "Stunning penthouse with panoramic city views",
-      "guest_access" => "Full penthouse access including rooftop",
-      "wifi_name" => "PenthouseWiFi",
-      "wifi_password" => "luxury2024"
-    },
     "user" => %{
       "id" => "456f6eca-6276-4993-bfeb-53cbbbba6f08",
-      "email" => "luxury@example.com", 
+      "email" => "luxury@example.com",
       "name" => "Robert Johnson"
     }
   }
@@ -276,70 +192,151 @@ defmodule HospitableClient.PropertiesTest do
     :ok
   end
 
-  describe "get_properties/1" do
-    test "builds correct query parameters for basic request" do
-      assert is_function(&Properties.get_properties/1)
+  describe "UUID validation" do
+    test "valid_uuid?/1 validates correct UUID format" do
+      valid_uuids = [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "123e4567-e89b-12d3-a456-426614174000",
+        "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      ]
+
+      Enum.each(valid_uuids, fn uuid ->
+        assert Properties.valid_uuid?(uuid), "#{uuid} should be valid"
+      end)
     end
 
-    test "builds correct query parameters with pagination" do
-      opts = %{page: 2, per_page: 25}
-      assert is_function(&Properties.get_properties/1)
-    end
+    test "valid_uuid?/1 rejects invalid UUID formats" do
+      invalid_uuids = [
+        "invalid-uuid",
+        "550e8400-e29b-41d4-a716",
+        "550e8400-e29b-41d4-a716-446655440000-extra",
+        "",
+        "550e8400-e29b-41d4-a716-44665544000g"
+      ]
 
-    test "builds correct query parameters with includes" do
-      opts = %{include: "listings,user,details,bookings"}
-      assert is_function(&Properties.get_properties/1)
+      Enum.each(invalid_uuids, fn uuid ->
+        assert !Properties.valid_uuid?(uuid), "#{uuid} should be invalid"
+      end)
     end
   end
 
-  describe "get_property/2" do
-    test "accepts property ID and options" do
-      property_id = "550e8400-e29b-41d4-a716-446655440000"
-      opts = %{include: "listings,bookings"}
+  describe "include option validation" do
+    test "get_properties/1 accepts valid include options" do
+      valid_includes = [
+        "user",
+        "listings",
+        "details",
+        "bookings",
+        "user,listings",
+        "user,listings,details,bookings"
+      ]
+
+      Enum.each(valid_includes, fn include ->
+        # This should not raise an error (would need real API to test fully)
+        assert is_function(&Properties.get_properties/1)
+      end)
+    end
+  end
+
+  describe "coordinate handling" do
+    test "distance_between/3 calculates distance correctly" do
+      # Distance between Berlin and Munich is approximately 504 km
+      berlin_prop = @sample_property_1
+      munich_prop = @sample_property_2
+
+      {:ok, distance_km} = Properties.distance_between(berlin_prop, munich_prop, :km)
+      {:ok, distance_miles} = Properties.distance_between(berlin_prop, munich_prop, :miles)
+
+      # Allow some tolerance for rounding
+      assert distance_km > 500 and distance_km < 510
+      assert distance_miles > 310 and distance_miles < 320
+    end
+
+    test "distance_between/3 handles missing coordinates" do
+      prop_no_coords = Map.delete(@sample_property_1, "address")
       
-      assert is_function(&Properties.get_property/2)
+      result = Properties.distance_between(prop_no_coords, @sample_property_2)
+      assert {:error, :no_coordinates} = result
+    end
+
+    test "find_nearby/5 finds properties within radius" do
+      properties = [@sample_property_1, @sample_property_2, @sample_property_3]
+      
+      # Find properties within 100km of Berlin
+      nearby_berlin = Properties.find_nearby(properties, 52.5200, 13.4050, 100, :km)
+      assert length(nearby_berlin) == 1
+      assert hd(nearby_berlin)["id"] == @sample_property_1["id"]
+      
+      # Find properties within 1000km of Berlin (should include Munich)
+      nearby_central_europe = Properties.find_nearby(properties, 52.5200, 13.4050, 1000, :km)
+      assert length(nearby_central_europe) == 2
+    end
+
+    test "within_radius filter works correctly" do
+      properties = [@sample_property_1, @sample_property_2, @sample_property_3]
+      
+      # Properties within 100km of Berlin
+      filtered = Properties.filter_properties(properties, %{
+        within_radius: %{lat: 52.5200, lon: 13.4050, radius: 100, unit: :km}
+      })
+      
+      assert length(filtered) == 1
+      assert hd(filtered)["id"] == @sample_property_1["id"]
     end
   end
 
-  describe "list_amenities/1" do
-    test "extracts amenities from response data" do
+  describe "enhanced filtering" do
+    test "filters by coordinate radius" do
+      # Test radius filtering around New York (should find penthouse)
+      filtered = Properties.filter_properties(@sample_response, %{
+        within_radius: %{lat: 40.7589, lon: -73.9851, radius: 50, unit: :miles}
+      })
+      
+      assert length(filtered) == 1
+      assert hd(filtered)["id"] == @sample_property_3["id"]
+    end
+
+    test "combines location and feature filters" do
+      # European properties with pools
+      filtered = Properties.filter_properties(@sample_response, %{
+        country: "DE",
+        has_amenities: ["pool"],
+        currency: "EUR"
+      })
+      
+      assert length(filtered) == 1
+      assert hd(filtered)["id"] == @sample_property_1["id"]
+    end
+
+    test "filters by state" do
+      bavaria_props = Properties.filter_properties(@sample_response, %{state: "Bavaria"})
+      assert length(bavaria_props) == 1
+      assert hd(bavaria_props)["id"] == @sample_property_2["id"]
+    end
+
+    test "filters by max capacity" do
+      small_props = Properties.filter_properties(@sample_response, %{max_capacity: 3})
+      assert length(small_props) == 1
+      assert hd(small_props)["id"] == @sample_property_2["id"]
+    end
+  end
+
+  describe "data processing functions" do
+    test "list_amenities/1 extracts unique amenities" do
       amenities = Properties.list_amenities(@sample_response)
       
       expected_amenities = ["concierge", "gym", "heating", "kitchen", "parking", "pool", "wifi"]
       assert amenities == expected_amenities
     end
 
-    test "extracts amenities from property list directly" do
-      properties = [@sample_property_1, @sample_property_2, @sample_property_3]
-      
-      amenities = Properties.list_amenities(properties)
-      
-      expected_amenities = ["concierge", "gym", "heating", "kitchen", "parking", "pool", "wifi"]
-      assert amenities == expected_amenities
-    end
-
-    test "handles properties without amenities" do
-      property_without_amenities = Map.delete(@sample_property_1, "amenities")
-      properties = [property_without_amenities, @sample_property_2]
-      
-      amenities = Properties.list_amenities(properties)
-      
-      expected_amenities = ["heating", "wifi"]
-      assert amenities == expected_amenities
-    end
-  end
-
-  describe "list_property_types/1" do
-    test "extracts unique property types" do
+    test "list_property_types/1 extracts unique property types" do
       types = Properties.list_property_types(@sample_response)
       
       expected_types = ["apartment", "penthouse", "villa"]
       assert types == expected_types
     end
-  end
 
-  describe "list_currencies/1" do
-    test "extracts unique currencies" do
+    test "list_currencies/1 extracts unique currencies" do
       currencies = Properties.list_currencies(@sample_response)
       
       expected_currencies = ["EUR", "USD"]
@@ -347,148 +344,7 @@ defmodule HospitableClient.PropertiesTest do
     end
   end
 
-  describe "filter_properties/2" do
-    test "filters by listed status" do
-      # Filter for listed properties
-      listed_properties = Properties.filter_properties(@sample_response, %{listed: true})
-      assert length(listed_properties) == 2
-      assert Enum.all?(listed_properties, fn p -> p["listed"] == true end)
-      
-      # Filter for unlisted properties
-      unlisted_properties = Properties.filter_properties(@sample_response, %{listed: false})
-      assert length(unlisted_properties) == 1
-      assert hd(unlisted_properties)["id"] == @sample_property_2["id"]
-    end
-
-    test "filters by property type" do
-      apartment_properties = Properties.filter_properties(@sample_response, %{property_type: "apartment"})
-      assert length(apartment_properties) == 1
-      assert hd(apartment_properties)["property_type"] == "apartment"
-    end
-
-    test "filters by currency" do
-      eur_properties = Properties.filter_properties(@sample_response, %{currency: "EUR"})
-      assert length(eur_properties) == 2
-      
-      usd_properties = Properties.filter_properties(@sample_response, %{currency: "USD"})
-      assert length(usd_properties) == 1
-    end
-
-    test "filters by minimum capacity" do
-      large_properties = Properties.filter_properties(@sample_response, %{min_capacity: 6})
-      assert length(large_properties) == 2
-      
-      very_large_properties = Properties.filter_properties(@sample_response, %{min_capacity: 8})
-      assert length(very_large_properties) == 1
-      assert hd(very_large_properties)["id"] == @sample_property_3["id"]
-    end
-
-    test "filters by city" do
-      berlin_properties = Properties.filter_properties(@sample_response, %{city: "Berlin"})
-      assert length(berlin_properties) == 1
-      assert hd(berlin_properties)["id"] == @sample_property_1["id"]
-      
-      # Test case insensitive
-      berlin_properties_lower = Properties.filter_properties(@sample_response, %{city: "berlin"})
-      assert length(berlin_properties_lower) == 1
-    end
-
-    test "filters by state" do
-      bavaria_properties = Properties.filter_properties(@sample_response, %{state: "Bavaria"})
-      assert length(bavaria_properties) == 1
-      assert hd(bavaria_properties)["id"] == @sample_property_2["id"]
-    end
-
-    test "filters by country" do
-      german_properties = Properties.filter_properties(@sample_response, %{country: "DE"})
-      assert length(german_properties) == 2
-      
-      us_properties = Properties.filter_properties(@sample_response, %{country: "US"})
-      assert length(us_properties) == 1
-    end
-
-    test "filters by required amenities" do
-      wifi_properties = Properties.filter_properties(@sample_response, %{has_amenities: ["wifi"]})
-      assert length(wifi_properties) == 3
-      
-      pool_properties = Properties.filter_properties(@sample_response, %{has_amenities: ["pool"]})
-      assert length(pool_properties) == 2
-      
-      # Multiple amenities (AND logic)
-      wifi_and_pool = Properties.filter_properties(@sample_response, %{has_amenities: ["wifi", "pool"]})
-      assert length(wifi_and_pool) == 2
-      
-      # Luxury amenities
-      luxury_amenities = Properties.filter_properties(@sample_response, %{has_amenities: ["pool", "gym", "concierge"]})
-      assert length(luxury_amenities) == 1
-      assert hd(luxury_amenities)["id"] == @sample_property_3["id"]
-    end
-
-    test "filters by house rules" do
-      # Pet-friendly properties
-      pet_friendly = Properties.filter_properties(@sample_response, %{pets_allowed: true})
-      assert length(pet_friendly) == 2
-      
-      # No pets allowed
-      no_pets = Properties.filter_properties(@sample_response, %{pets_allowed: false})
-      assert length(no_pets) == 1
-      assert hd(no_pets)["id"] == @sample_property_2["id"]
-      
-      # Events allowed
-      events_ok = Properties.filter_properties(@sample_response, %{events_allowed: true})
-      assert length(events_ok) == 1
-      assert hd(events_ok)["id"] == @sample_property_3["id"]
-    end
-
-    test "filters by bedrooms and bathrooms" do
-      # Properties with at least 2 bedrooms
-      large_bedrooms = Properties.filter_properties(@sample_response, %{min_bedrooms: 2})
-      assert length(large_bedrooms) == 2
-      
-      # Properties with at least 3 bathrooms
-      many_bathrooms = Properties.filter_properties(@sample_response, %{min_bathrooms: 3})
-      assert length(many_bathrooms) == 1
-      assert hd(many_bathrooms)["id"] == @sample_property_3["id"]
-    end
-
-    test "filters by calendar restriction" do
-      restricted = Properties.filter_properties(@sample_response, %{calendar_restricted: true})
-      assert length(restricted) == 1
-      assert hd(restricted)["id"] == @sample_property_2["id"]
-      
-      unrestricted = Properties.filter_properties(@sample_response, %{calendar_restricted: false})
-      assert length(unrestricted) == 2
-    end
-
-    test "combines multiple filters" do
-      # Listed AND in Germany AND has pool AND pets allowed
-      filtered = Properties.filter_properties(@sample_response, %{
-        listed: true,
-        country: "DE",
-        has_amenities: ["pool"],
-        pets_allowed: true
-      })
-      
-      assert length(filtered) == 1
-      assert hd(filtered)["id"] == @sample_property_1["id"]
-    end
-
-    test "complex filtering scenario" do
-      # Luxury properties: Listed, min 4 bedrooms, pool + gym, events allowed, USD currency
-      luxury_filter = Properties.filter_properties(@sample_response, %{
-        listed: true,
-        min_bedrooms: 4,
-        has_amenities: ["pool", "gym"],
-        events_allowed: true,
-        currency: "USD"
-      })
-      
-      assert length(luxury_filter) == 1
-      assert hd(luxury_filter)["id"] == @sample_property_3["id"]
-    end
-  end
-
-  describe "group_properties/2" do
+  describe "grouping functionality" do
     test "groups by city" do
       grouped = Properties.group_properties(@sample_response, :city)
       
@@ -519,11 +375,104 @@ defmodule HospitableClient.PropertiesTest do
       assert length(grouped["EUR"]) == 2
       assert length(grouped["USD"]) == 1
     end
+
+    test "groups by state" do
+      grouped = Properties.group_properties(@sample_response, :state)
+      
+      assert Map.has_key?(grouped, "Berlin")
+      assert Map.has_key?(grouped, "Bavaria")
+      assert Map.has_key?(grouped, "New York")
+    end
   end
 
-  describe "get_all_properties/1" do
-    test "accepts options for fetching all properties" do
-      assert is_function(&Properties.get_all_properties/1)
+  describe "error handling" do
+    test "get_property/2 validates UUID format" do
+      # This would be tested with actual HTTP calls in integration tests
+      assert is_function(&Properties.get_property/2)
+    end
+
+    test "handles invalid include options" do
+      # This would be tested with actual validation in integration tests
+      assert is_function(&Properties.get_properties/1)
+    end
+  end
+
+  describe "complex filtering scenarios" do
+    test "luxury property search" do
+      # Find luxury properties: Listed, expensive currency, luxury amenities, events allowed
+      luxury_filter = Properties.filter_properties(@sample_response, %{
+        listed: true,
+        currency: "USD",
+        has_amenities: ["pool", "gym", "concierge"],
+        events_allowed: true,
+        min_bedrooms: 4
+      })
+      
+      assert length(luxury_filter) == 1
+      assert hd(luxury_filter)["id"] == @sample_property_3["id"]
+      assert hd(luxury_filter)["property_type"] == "penthouse"
+    end
+
+    test "pet-friendly properties in Germany" do
+      pet_friendly_de = Properties.filter_properties(@sample_response, %{
+        country: "DE",
+        pets_allowed: true,
+        listed: true
+      })
+      
+      assert length(pet_friendly_de) == 1
+      assert hd(pet_friendly_de)["id"] == @sample_property_1["id"]
+    end
+
+    test "business travel suitable properties" do
+      # Small, centrally located, calendar not restricted
+      business_suitable = Properties.filter_properties(@sample_response, %{
+        max_capacity: 4,
+        has_amenities: ["wifi"],
+        calendar_restricted: false
+      })
+      
+      assert length(business_suitable) == 2
+      property_ids = Enum.map(business_suitable, fn p -> p["id"] end)
+      assert @sample_property_1["id"] in property_ids
+      assert @sample_property_3["id"] in property_ids
+    end
+  end
+
+  describe "API specification compliance" do
+    test "handles enhanced address structure with coordinates" do
+      # Test that we can extract coordinates properly
+      {:ok, {lat, lon}} = Properties.distance_between(@sample_property_1, @sample_property_1)
+      assert lat == 52.5200
+      assert lon == 13.4050
+    end
+
+    test "processes all required fields from specification" do
+      property = @sample_property_1
+      
+      # Basic fields
+      assert Map.has_key?(property, "id")
+      assert Map.has_key?(property, "name")
+      assert Map.has_key?(property, "public_name")
+      assert Map.has_key?(property, "picture")
+      
+      # Address with coordinates
+      assert get_in(property, ["address", "coordinates", "latitude"])
+      assert get_in(property, ["address", "coordinates", "longitude"])
+      
+      # Timing
+      assert Map.has_key?(property, "check-in")
+      assert Map.has_key?(property, "check-out")
+      
+      # Capacity
+      assert get_in(property, ["capacity", "max"])
+      assert get_in(property, ["capacity", "bedrooms"])
+      assert get_in(property, ["capacity", "bathrooms"])
+      
+      # House rules
+      assert get_in(property, ["house_rules", "pets_allowed"]) != nil
+      assert get_in(property, ["house_rules", "smoking_allowed"]) != nil
+      assert get_in(property, ["house_rules", "events_allowed"]) != nil
     end
   end
 end

@@ -250,7 +250,7 @@ defmodule HospitableClient.HTTP.Client do
 
     case Jason.decode(body) do
       {:ok, error_data} -> {:error, {:not_found, error_data}}
-      {:error, _} -> {:error, {:not_found, %{"message" => "Resource not found"}}}
+      {:error, _} -> {:error, {:not_found, %{"message" => "Resource not found", "status" => 404}}}
     end
   end
 

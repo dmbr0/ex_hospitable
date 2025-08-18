@@ -32,6 +32,7 @@ defmodule HospitableClient do
   alias HospitableClient.Auth.Manager, as: AuthManager
   alias HospitableClient.HTTP.Client
   alias HospitableClient.Properties
+  alias HospitableClient.Reservations
 
   @doc """
   Sets the authentication token for API requests.
@@ -162,6 +163,15 @@ defmodule HospitableClient do
   This is a convenience function that delegates to `HospitableClient.Properties.get_properties/1`.
   For more advanced property operations, use the `HospitableClient.Properties` module directly.
 
+  ## Available Include Options
+
+  - `"user"` - Include property owner information
+  - `"listings"` - Include platform listings (requires listing:read scope)
+  - `"details"` - Include detailed property information
+  - `"bookings"` - Include booking policies and rules
+
+  Multiple includes can be combined: `"user,listings,details,bookings"`
+
   ## Examples
 
       iex> HospitableClient.get_properties()
@@ -170,7 +180,7 @@ defmodule HospitableClient do
       iex> HospitableClient.get_properties(%{page: 2, per_page: 25})
       {:ok, %{"data" => [...], "meta" => %{"current_page" => 2}}}
 
-      iex> HospitableClient.get_properties(%{include: "listings,user"})
+      iex> HospitableClient.get_properties(%{include: "user,listings,details"})
       {:ok, %{"data" => [...], "included" => [...]}}
 
   """
@@ -180,21 +190,119 @@ defmodule HospitableClient do
   end
 
   @doc """
-  Retrieves a single property by ID.
+  Retrieves a single property by UUID.
 
   This is a convenience function that delegates to `HospitableClient.Properties.get_property/2`.
+
+  ## Parameters
+
+  - `property_uuid` - Valid UUID string for the property
+  - `opts` - Optional map with include options
 
   ## Examples
 
       iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
-      {:ok, %{"data" => %{"id" => "550e8400-e29b-41d4-a716-446655440000", ...}}}
+      {:ok, %{"id" => "550e8400-e29b-41d4-a716-446655440000", ...}}
 
-      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000", %{include: "listings"})
-      {:ok, %{"data" => %{...}, "included" => [...]}}
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000", %{include: "user,listings"})
+      {:ok, %{"id" => "...", "user" => %{...}, "listings" => [...]}}
+
+  ## Errors
+
+      iex> HospitableClient.get_property("invalid-uuid")
+      {:error, :invalid_uuid}
+
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
+      {:error, {:not_found, %{"message" => "Property not found"}}}
 
   """
   @spec get_property(String.t(), map()) :: {:ok, map()} | {:error, term()}
-  def get_property(property_id, opts \\ %{}) do
-    Properties.get_property(property_id, opts)
+  def get_property(property_uuid, opts \\ %{}) do
+    Properties.get_property(property_uuid, opts)
+  end
+
+  ## Reservations API
+
+  @doc """
+  Retrieves a paginated list of reservations.
+
+  This is a convenience function that delegates to `HospitableClient.Reservations.get_reservations/1`.
+  For more advanced reservation operations, use the `HospitableClient.Reservations` module directly.
+
+  ## Required Parameters
+
+  - `properties` - List of property UUIDs (required)
+
+  ## Available Include Options
+
+  - `"financials"` - Include financial breakdown for guest and host
+  - `"financialsV2"` - Include enhanced financial data (v2 format)
+  - `"guest"` - Include detailed guest information
+  - `"properties"` - Include property details
+  - `"listings"` - Include platform listing information
+
+  Multiple includes can be combined: `"financials,guest,properties"`
+
+  ## Examples
+
+      # Basic reservation retrieval
+      iex> HospitableClient.get_reservations(%{
+        properties: ["550e8400-e29b-41d4-a716-446655440000"]
+      })
+      {:ok, %{"data" => [...], "meta" => %{"total" => 23}}}
+
+      # With date filtering
+      iex> HospitableClient.get_reservations(%{
+        properties: ["property-uuid"],
+        date_query: "checkin",
+        start_date: "2024-02-01",
+        end_date: "2024-02-28"
+      })
+
+      # With financial and guest includes
+      iex> HospitableClient.get_reservations(%{
+        properties: ["property-uuid"],
+        include: "financials,guest,properties"
+      })
+
+  ## Default Behavior
+
+  If no date filters are provided, the API defaults to reservations with
+  check-in dates in the next 2 weeks.
+
+  """
+  @spec get_reservations(map()) :: {:ok, map()} | {:error, term()}
+  def get_reservations(opts) when is_map(opts) do
+    Reservations.get_reservations(opts)
+  end
+
+  @doc """
+  Gets all reservations across all pages.
+
+  This is a convenience function that delegates to `HospitableClient.Reservations.get_all_reservations/1`.
+
+  ## Parameters
+
+  - `opts` - A map of options (same as get_reservations/1)
+
+  ## Examples
+
+      iex> HospitableClient.get_all_reservations(%{
+        properties: ["property-uuid"],
+        include: "financials,guest"
+      })
+      {:ok, %{
+        "data" => [...],  # All reservations across all pages
+        "meta" => %{
+          "total_pages" => 3,
+          "total_reservations" => 67,
+          "fetched_pages" => 3
+        }
+      }}
+
+  """
+  @spec get_all_reservations(map()) :: {:ok, map()} | {:error, term()}
+  def get_all_reservations(opts) when is_map(opts) do
+    Reservations.get_all_reservations(opts)
   end
 end

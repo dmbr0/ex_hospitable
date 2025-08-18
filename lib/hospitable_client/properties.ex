@@ -5,25 +5,43 @@ defmodule HospitableClient.Properties do
   This module provides functions for retrieving and managing properties,
   including support for pagination, filtering, and including related resources.
 
+  ## Available Include Options
+
+  When fetching properties, you can include related resources using the `include` parameter:
+  - `"user"` - Include property owner information
+  - `"listings"` - Include platform listings (requires listing:read scope)
+  - `"details"` - Include detailed property information
+  - `"bookings"` - Include booking policies and rules
+
+  Multiple includes can be combined: `"user,listings,details,bookings"`
+
   ## Usage
 
       # Get all properties (first page, 10 per page)
       {:ok, response} = HospitableClient.Properties.get_properties()
 
-      # Get properties with pagination
+      # Get properties with pagination and includes
       {:ok, response} = HospitableClient.Properties.get_properties(%{
         page: 2,
-        per_page: 25
+        per_page: 25,
+        include: "user,listings,details"
       })
 
-      # Get properties with included resources
-      {:ok, response} = HospitableClient.Properties.get_properties(%{
-        include: "listings,user,details,bookings"
-      })
+      # Get single property by UUID
+      {:ok, property} = HospitableClient.Properties.get_property("550e8400-e29b-41d4-a716-446655440000")
+
+      # Get single property with all includes
+      {:ok, property} = HospitableClient.Properties.get_property(
+        "550e8400-e29b-41d4-a716-446655440000",
+        %{include: "user,listings,details,bookings"}
+      )
 
   """
 
   alias HospitableClient.HTTP.Client
+
+  # Valid include options as per API specification
+  @valid_includes ~w(user listings details bookings)
 
   @doc """
   Retrieves a paginated list of properties.
@@ -34,7 +52,7 @@ defmodule HospitableClient.Properties do
 
   ## Options
 
-  - `:include` - Related resources to include. Allowed values: "listings", "user", "details", "bookings"
+  - `:include` - Related resources to include. Valid values: #{inspect(@valid_includes)}
   - `:page` - Page of results (default: 1)
   - `:per_page` - Results per page, max 100 (default: 10)
 
@@ -51,20 +69,24 @@ defmodule HospitableClient.Properties do
             "picture" => "https://example.com/image.jpg",
             "address" => %{
               "number" => "32",
-              "street" => "Senefelderplatz", 
+              "street" => "Senefelderplatz",
               "city" => "Berlin",
               "state" => "Berlin",
               "country" => "DE",
-              "postcode" => "10405"
+              "postcode" => "10405",
+              "coordinates" => %{
+                "latitude" => 52.5200,
+                "longitude" => 13.4050
+              },
+              "display" => "32 Senefelderplatz, 10405 Berlin, DE"
             },
-            "coordinates" => %{"display" => "52.5200,13.4050"},
             "timezone" => "+0200",
             "listed" => true,
             "amenities" => ["wifi", "kitchen", "parking"],
             "description" => "Beautiful property...",
             "summary" => "Perfect for vacation...",
             "check-in" => "15:00",
-            "check-out" => "11:00", 
+            "check-out" => "11:00",
             "currency" => "EUR",
             "capacity" => %{"max" => 4, "bedrooms" => 2, "beds" => 2, "bathrooms" => 1},
             # ... more fields
@@ -74,76 +96,74 @@ defmodule HospitableClient.Properties do
         "meta" => %{...}
       }}
 
-  ## Property Object Structure
-
-  Each property contains comprehensive information:
-  - `id` - Property UUID
-  - `name` - Internal property name
-  - `public_name` - Public display name
-  - `picture` - Property image URL
-  - `address` - Complete address with number, street, city, state, country, postcode
-  - `coordinates` - Location coordinates
-  - `timezone` - Property timezone
-  - `listed` - Whether property is currently listed
-  - `amenities` - Array of amenity strings
-  - `description` - Full property description
-  - `summary` - Short property summary
-  - `check-in`/`check-out` - Times in HH:MM format
-  - `currency` - 3-letter currency code
-  - `capacity` - Guest capacity details (max, bedrooms, beds, bathrooms)
-  - `room_details` - Array of room types and quantities
-  - `house_rules` - Rules for pets, smoking, events
-  - `listings` - Platform listings with detailed info
-  - `host` - Host information
-  - `tags` - Property tags
-  - `property_type` - Type of property
-  - `room_type` - Type of accommodation
-  - `calendar_restricted` - Calendar restriction status
-  - `bookings` - Booking policies, fees, discounts
-  - `details` - Additional property details
-  - `user` - Owner user information
+      # Get properties with includes
+      iex> HospitableClient.Properties.get_properties(%{include: "user,listings"})
+      {:ok, %{"data" => [...], "included" => [...]}}
 
   """
   @spec get_properties(map()) :: {:ok, map()} | {:error, term()}
   def get_properties(opts \\ %{}) do
-    params = build_query_params(opts)
-    Client.get("/properties", params)
+    with {:ok, validated_opts} <- validate_options(opts),
+         params <- build_query_params(validated_opts) do
+      Client.get("/properties", params)
+    end
   end
 
   @doc """
-  Retrieves a single property by ID.
+  Retrieves a single property by UUID.
 
   ## Parameters
 
-  - `property_id` - The UUID of the property to retrieve
+  - `property_uuid` - The UUID of the property to retrieve (must be valid UUID format)
   - `opts` - A map of options for the request (optional)
 
   ## Options
 
-  - `:include` - Related resources to include. Allowed values: "listings", "user", "details", "bookings"
+  - `:include` - Related resources to include. Valid values: #{inspect(@valid_includes)}
 
   ## Examples
 
+      # Get single property
       iex> HospitableClient.Properties.get_property("550e8400-e29b-41d4-a716-446655440000")
       {:ok, %{
-        "data" => %{
-          "id" => "550e8400-e29b-41d4-a716-446655440000",
-          "name" => "Relaxing Villa near the sea",
-          # ... complete property object
-        }
+        "id" => "550e8400-e29b-41d4-a716-446655440000",
+        "name" => "Relaxing Villa near the sea",
+        "address" => %{
+          "coordinates" => %{
+            "latitude" => 52.5200,
+            "longitude" => 13.4050
+          }
+        },
+        # ... complete property object
       }}
 
       # Get property with all includes
-      iex> HospitableClient.Properties.get_property("550e8400-e29b-41d4-a716-446655440000", %{
-        include: "listings,user,details,bookings"
-      })
-      {:ok, %{"data" => %{...}, "included" => [...]}}
+      iex> HospitableClient.Properties.get_property(
+        "550e8400-e29b-41d4-a716-446655440000",
+        %{include: "user,listings,details,bookings"}
+      )
+      {:ok, %{...}}
+
+  ## Response Structure
+
+  Returns a single property object with all the fields from the schema.
+  Unlike the list endpoint, this returns the property directly (not wrapped in a data array).
+
+  ## Errors
+
+  - `{:error, :invalid_uuid}` - If the provided UUID is not in valid format
+  - `{:error, {:not_found, error_data}}` - If property with given UUID doesn't exist
+  - `{:error, {:unauthorized, error_data}}` - If authentication fails
+  - `{:error, {:forbidden, error_data}}` - If access is denied
 
   """
   @spec get_property(String.t(), map()) :: {:ok, map()} | {:error, term()}
-  def get_property(property_id, opts \\ %{}) when is_binary(property_id) do
-    params = build_query_params(opts)
-    Client.get("/properties/#{property_id}", params)
+  def get_property(property_uuid, opts \\ %{}) when is_binary(property_uuid) do
+    with {:ok, _} <- validate_uuid(property_uuid),
+         {:ok, validated_opts} <- validate_options(opts),
+         params <- build_query_params(validated_opts) do
+      Client.get("/properties/#{property_uuid}", params)
+    end
   end
 
   @doc """
@@ -158,7 +178,7 @@ defmodule HospitableClient.Properties do
 
   ## Options
 
-  - `:include` - Related resources to include
+  - `:include` - Related resources to include. Valid values: #{inspect(@valid_includes)}
   - `:per_page` - Results per page for internal pagination (default: 100, max: 100)
   - `:max_pages` - Maximum number of pages to fetch (default: 50, safety limit)
 
@@ -181,22 +201,24 @@ defmodule HospitableClient.Properties do
   """
   @spec get_all_properties(map()) :: {:ok, map()} | {:error, term()}
   def get_all_properties(opts \\ %{}) do
-    per_page = Map.get(opts, :per_page, 100)
-    max_pages = Map.get(opts, :max_pages, 50)
-    
-    # Ensure per_page doesn't exceed API limit
-    per_page = min(per_page, 100)
-    
-    initial_opts = opts
-    |> Map.put(:page, 1)
-    |> Map.put(:per_page, per_page)
-    
-    case get_properties(initial_opts) do
-      {:ok, first_response} ->
-        fetch_remaining_pages(first_response, opts, per_page, max_pages, 1)
-        
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, validated_opts} <- validate_options(opts) do
+      per_page = Map.get(validated_opts, :per_page, 100)
+      max_pages = Map.get(validated_opts, :max_pages, 50)
+
+      # Ensure per_page doesn't exceed API limit
+      per_page = min(per_page, 100)
+
+      initial_opts = validated_opts
+      |> Map.put(:page, 1)
+      |> Map.put(:per_page, per_page)
+
+      case get_properties(initial_opts) do
+        {:ok, first_response} ->
+          fetch_remaining_pages(first_response, validated_opts, per_page, max_pages, 1)
+
+        {:error, reason} ->
+          {:error, reason}
+      end
     end
   end
 
@@ -225,10 +247,10 @@ defmodule HospitableClient.Properties do
   def list_amenities(%{"data" => properties}) when is_list(properties) do
     list_amenities(properties)
   end
-  
+
   def list_amenities(properties) when is_list(properties) do
     properties
-    |> Enum.flat_map(fn property -> 
+    |> Enum.flat_map(fn property ->
       Map.get(property, "amenities", [])
     end)
     |> Enum.uniq()
@@ -281,6 +303,73 @@ defmodule HospitableClient.Properties do
   end
 
   @doc """
+  Calculates the distance between two properties based on their coordinates.
+
+  ## Parameters
+
+  - `property1` - First property with coordinates
+  - `property2` - Second property with coordinates
+  - `unit` - Unit for distance calculation (default: `:km`, options: `:km`, `:miles`)
+
+  ## Examples
+
+      iex> prop1 = %{"address" => %{"coordinates" => %{"latitude" => 52.5200, "longitude" => 13.4050}}}
+      iex> prop2 = %{"address" => %{"coordinates" => %{"latitude" => 48.1351, "longitude" => 11.5820}}}
+      iex> HospitableClient.Properties.distance_between(prop1, prop2)
+      {:ok, 504.2}
+
+      iex> HospitableClient.Properties.distance_between(prop1, prop2, :miles)
+      {:ok, 313.4}
+
+  """
+  @spec distance_between(map(), map(), atom()) :: {:ok, float()} | {:error, term()}
+  def distance_between(property1, property2, unit \\ :km) do
+    with {:ok, {lat1, lon1}} <- extract_coordinates(property1),
+         {:ok, {lat2, lon2}} <- extract_coordinates(property2) do
+      distance = haversine_distance(lat1, lon1, lat2, lon2, unit)
+      {:ok, distance}
+    end
+  end
+
+  @doc """
+  Finds properties within a specified radius of given coordinates.
+
+  ## Parameters
+
+  - `properties` - List of properties or response map
+  - `center_lat` - Center latitude
+  - `center_lon` - Center longitude
+  - `radius` - Search radius
+  - `unit` - Unit for radius (default: `:km`, options: `:km`, `:miles`)
+
+  ## Examples
+
+      iex> # Find properties within 10km of Berlin city center
+      iex> nearby = HospitableClient.Properties.find_nearby(response, 52.5200, 13.4050, 10)
+      [%{"id" => "...", "address" => %{...}}, ...]
+
+  """
+@spec find_nearby(map() | list(), float(), float(), float(), atom()) :: list(map())
+def find_nearby(properties, center_lat, center_lon, radius, unit \\ :km)
+
+def find_nearby(%{"data" => properties}, center_lat, center_lon, radius, unit) when is_list(properties) do
+  find_nearby(properties, center_lat, center_lon, radius, unit)
+end
+
+def find_nearby(properties, center_lat, center_lon, radius, unit) when is_list(properties) do
+    properties
+    |> Enum.filter(fn property ->
+      case extract_coordinates(property) do
+        {:ok, {lat, lon}} ->
+          distance = haversine_distance(center_lat, center_lon, lat, lon, unit)
+          distance <= radius
+        {:error, _} ->
+          false
+      end
+    end)
+  end
+
+  @doc """
   Filters properties by specific criteria.
 
   This is a client-side filtering function that works on already-fetched properties.
@@ -303,6 +392,7 @@ defmodule HospitableClient.Properties do
   - `:city` - Filter by city name (case insensitive)
   - `:state` - Filter by state name (case insensitive)
   - `:country` - Filter by country code (case insensitive)
+  - `:within_radius` - Filter by distance from coordinates `%{lat: float, lon: float, radius: float, unit: :km/:miles}`
 
   **Capacity Filters:**
   - `:min_capacity` - Minimum guest capacity
@@ -322,32 +412,18 @@ defmodule HospitableClient.Properties do
   ## Examples
 
       iex> {:ok, response} = HospitableClient.Properties.get_properties()
-      
-      # Basic filtering
-      iex> listed_properties = HospitableClient.Properties.filter_properties(response, %{listed: true})
-      
-      # Location filtering
-      iex> berlin_properties = HospitableClient.Properties.filter_properties(response, %{city: "Berlin"})
-      
-      # Capacity filtering
-      iex> large_properties = HospitableClient.Properties.filter_properties(response, %{min_capacity: 6})
-      
-      # Amenity filtering
-      iex> properties_with_pool = HospitableClient.Properties.filter_properties(response, %{
-        has_amenities: ["pool", "wifi"]
+
+      # Location-based filtering with coordinates
+      iex> nearby_berlin = HospitableClient.Properties.filter_properties(response, %{
+        within_radius: %{lat: 52.5200, lon: 13.4050, radius: 10, unit: :km}
       })
-      
-      # House rules filtering
-      iex> pet_friendly = HospitableClient.Properties.filter_properties(response, %{pets_allowed: true})
-      
-      # Combined filtering
-      iex> filtered = HospitableClient.Properties.filter_properties(response, %{
-        listed: true,
-        city: "Berlin",
-        min_capacity: 4,
-        has_amenities: ["wifi", "kitchen"],
-        pets_allowed: true,
-        currency: "EUR"
+
+      # Advanced filtering
+      iex> luxury_properties = HospitableClient.Properties.filter_properties(response, %{
+        currency: "USD",
+        has_amenities: ["pool", "gym", "concierge"],
+        events_allowed: true,
+        min_capacity: 8
       })
 
   """
@@ -355,7 +431,7 @@ defmodule HospitableClient.Properties do
   def filter_properties(%{"data" => properties}, filters) when is_list(properties) do
     filter_properties(properties, filters)
   end
-  
+
   def filter_properties(properties, filters) when is_list(properties) and is_map(filters) do
     Enum.filter(properties, fn property ->
       passes_all_filters?(property, filters)
@@ -388,7 +464,7 @@ defmodule HospitableClient.Properties do
 
   def group_properties(properties, group_by) when is_list(properties) and is_atom(group_by) do
     field_name = Atom.to_string(group_by)
-    
+
     case group_by do
       :city -> group_by_nested_field(properties, ["address", "city"])
       :state -> group_by_nested_field(properties, ["address", "state"])
@@ -397,7 +473,98 @@ defmodule HospitableClient.Properties do
     end
   end
 
+  @doc """
+  Validates if a string is a valid UUID format.
+
+  ## Examples
+
+      iex> HospitableClient.Properties.valid_uuid?("550e8400-e29b-41d4-a716-446655440000")
+      true
+
+      iex> HospitableClient.Properties.valid_uuid?("invalid-uuid")
+      false
+
+  """
+  @spec valid_uuid?(String.t()) :: boolean()
+  def valid_uuid?(uuid) when is_binary(uuid) do
+    case validate_uuid(uuid) do
+      {:ok, _} -> true
+      {:error, _} -> false
+    end
+  end
+
   # Private Functions
+
+  defp validate_options(opts) when is_map(opts) do
+    case validate_include_option(opts) do
+      {:ok, validated_opts} -> {:ok, validated_opts}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp validate_include_option(opts) do
+    case Map.get(opts, :include) do
+      nil ->
+        {:ok, opts}
+      include_string when is_binary(include_string) ->
+        includes = String.split(include_string, ",", trim: true)
+        invalid_includes = includes -- @valid_includes
+
+        if Enum.empty?(invalid_includes) do
+          {:ok, opts}
+        else
+          {:error, {:invalid_includes, invalid_includes, @valid_includes}}
+        end
+      _ ->
+        {:error, {:invalid_include_format, "Include must be a string"}}
+    end
+  end
+
+  defp validate_uuid(uuid) when is_binary(uuid) do
+    # UUID v4 regex pattern
+    uuid_pattern = ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+    if Regex.match?(uuid_pattern, uuid) do
+      {:ok, uuid}
+    else
+      {:error, :invalid_uuid}
+    end
+  end
+
+  defp extract_coordinates(property) do
+    case get_in(property, ["address", "coordinates"]) do
+      %{"latitude" => lat, "longitude" => lon} when is_number(lat) and is_number(lon) ->
+        {:ok, {lat, lon}}
+      _ ->
+        {:error, :no_coordinates}
+    end
+  end
+
+  defp haversine_distance(lat1, lon1, lat2, lon2, unit) do
+    # Convert degrees to radians
+    lat1_rad = :math.pi() * lat1 / 180
+    lon1_rad = :math.pi() * lon1 / 180
+    lat2_rad = :math.pi() * lat2 / 180
+    lon2_rad = :math.pi() * lon2 / 180
+
+    # Haversine formula
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    a = :math.pow(:math.sin(dlat / 2), 2) +
+        :math.cos(lat1_rad) * :math.cos(lat2_rad) * :math.pow(:math.sin(dlon / 2), 2)
+    c = 2 * :math.atan2(:math.sqrt(a), :math.sqrt(1 - a))
+
+    # Earth's radius
+    radius = case unit do
+      :km -> 6371.0
+      :miles -> 3959.0
+    end
+
+    # Calculate distance
+    distance = radius * c
+    Float.round(distance, 1)
+  end
 
   defp build_query_params(opts) do
     opts
@@ -410,11 +577,11 @@ defmodule HospitableClient.Properties do
   defp fetch_remaining_pages(first_response, opts, per_page, max_pages, current_page) do
     all_data = first_response["data"] || []
     all_included = first_response["included"] || []
-    
+
     meta = first_response["meta"] || %{}
     total = Map.get(meta, "total", 0)
     total_pages = ceil(total / per_page)
-    
+
     if current_page >= total_pages or current_page >= max_pages do
       # We have all pages or hit the safety limit
       {:ok, %{
@@ -432,7 +599,7 @@ defmodule HospitableClient.Properties do
       next_opts = opts
       |> Map.put(:page, next_page)
       |> Map.put(:per_page, per_page)
-      
+
       case get_properties(next_opts) do
         {:ok, next_response} ->
           # Combine data from both responses
@@ -441,9 +608,9 @@ defmodule HospitableClient.Properties do
             "included" => all_included ++ (next_response["included"] || []),
             "meta" => next_response["meta"] || %{}
           }
-          
+
           fetch_remaining_pages(combined_response, opts, per_page, max_pages, next_page)
-          
+
         {:error, reason} ->
           # Return what we have so far
           {:ok, %{
@@ -501,6 +668,17 @@ defmodule HospitableClient.Properties do
   defp passes_filter?(property, :country, expected_country) do
     country = get_in(property, ["address", "country"])
     country && String.downcase(country) == String.downcase(expected_country)
+  end
+
+  defp passes_filter?(property, :within_radius, %{lat: lat, lon: lon, radius: radius} = opts) do
+    unit = Map.get(opts, :unit, :km)
+    case extract_coordinates(property) do
+      {:ok, {prop_lat, prop_lon}} ->
+        distance = haversine_distance(lat, lon, prop_lat, prop_lon, unit)
+        distance <= radius
+      {:error, _} ->
+        false
+    end
   end
 
   # Capacity filters
