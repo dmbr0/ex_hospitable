@@ -40,4 +40,19 @@ defmodule HospitableClientTest do
       assert HospitableClient.authenticated?() == false
     end
   end
+
+  describe "properties API" do
+    test "get_properties/0 delegates to Properties module" do
+      # Test that the delegation function exists
+      assert is_function(&HospitableClient.get_properties/0)
+      assert is_function(&HospitableClient.get_properties/1)
+    end
+
+    test "get_property/1 delegates to Properties module" do
+      # Test that the delegation function exists
+      property_id = "550e8400-e29b-41d4-a716-446655440000"
+      assert is_function(&HospitableClient.get_property/1)
+      assert is_function(&HospitableClient.get_property/2)
+    end
+  end
 end

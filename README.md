@@ -54,11 +54,28 @@ HospitableClient.authenticated?()
 ### Making API Requests
 
 ```elixir
-# Get all properties
-{:ok, properties} = HospitableClient.get("/properties")
+# Get all properties (first page, 10 per page)
+{:ok, properties} = HospitableClient.get_properties()
+
+# Get properties with pagination
+{:ok, properties} = HospitableClient.get_properties(%{
+  page: 2,
+  per_page: 25
+})
 
 # Get properties with included resources
-{:ok, properties} = HospitableClient.get("/properties", %{"include" => "calendar"})
+{:ok, properties} = HospitableClient.get_properties(%{
+  include: "listings,user,details"
+})
+
+# Get single property
+{:ok, property} = HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
+
+# Get single property with includes
+{:ok, property} = HospitableClient.get_property(
+  "550e8400-e29b-41d4-a716-446655440000",
+  %{include: "listings"}
+)
 
 # Create a new property
 {:ok, property} = HospitableClient.post("/properties", %{
@@ -79,6 +96,83 @@ HospitableClient.authenticated?()
 # Delete a property
 {:ok, _} = HospitableClient.delete("/properties/123")
 ```
+
+### Properties Module - Advanced Features
+
+The `HospitableClient.Properties` module provides specialized functions for property management:
+
+```elixir
+# Get all properties across all pages (handles pagination automatically)
+{:ok, all_properties} = HospitableClient.Properties.get_all_properties()
+
+# Get properties with custom pagination settings
+{:ok, properties} = HospitableClient.Properties.get_all_properties(%{
+  per_page: 100,        # Max page size for faster fetching
+  max_pages: 10,        # Safety limit
+  include: "listings"   # Include related resources
+})
+
+# Extract all unique amenities from properties
+{:ok, response} = HospitableClient.get_properties()
+amenities = HospitableClient.Properties.list_amenities(response)
+# => ["wifi", "kitchen", "parking", "pool", ...]
+
+# Filter properties (client-side)
+berlin_properties = HospitableClient.Properties.filter_properties(response, %{
+  city: "Berlin"
+})
+
+listed_with_kitchen = HospitableClient.Properties.filter_properties(response, %{
+  listed: true,
+  has_amenities: ["kitchen"]
+})
+
+large_properties = HospitableClient.Properties.filter_properties(response, %{
+  min_capacity: 4
+})
+
+# Advanced filtering with new options
+pet_friendly_villas = HospitableClient.Properties.filter_properties(response, %{
+  property_type: "villa",
+  pets_allowed: true,
+  min_bedrooms: 3
+})
+
+luxury_properties = HospitableClient.Properties.filter_properties(response, %{
+  currency: "USD",
+  has_amenities: ["pool", "gym", "concierge"],
+  events_allowed: true,
+  min_capacity: 8
+})
+```
+
+#### Available Filter Options
+
+**Basic Filters:**
+- `:listed` - Filter by listed status (true/false)
+- `:property_type` - Filter by property type (villa, apartment, penthouse, etc.)
+- `:room_type` - Filter by room type (entire_place, private_room, etc.)
+- `:currency` - Filter by currency code (EUR, USD, GBP, etc.)
+- `:calendar_restricted` - Filter by calendar restriction status
+
+**Location Filters:**
+- `:city` - Filter by city name (case insensitive)
+- `:state` - Filter by state/region name (case insensitive)
+- `:country` - Filter by country code (case insensitive)
+
+**Capacity Filters:**
+- `:min_capacity` - Filter by minimum guest capacity
+- `:max_capacity` - Filter by maximum guest capacity
+- `:min_bedrooms` - Filter by minimum number of bedrooms
+- `:min_bathrooms` - Filter by minimum number of bathrooms
+
+**Feature Filters:**
+- `:has_amenities` - Filter properties that have ALL specified amenities
+
+**House Rules Filters:**
+- `:pets_allowed` - Filter by pet policy (true/false)
+- `:smoking_allowed` - Filter by smoking policy (true/false)
+- `:events_allowed` - Filter by events policy (true/false)
 
 ### Error Handling
 
@@ -144,6 +238,19 @@ The authentication state is managed by a GenServer that provides:
 - `put/2` - Make PUT request
 - `patch/2` - Make PATCH request
 - `delete/1` - Make DELETE request
+- `get_properties/1` - Get paginated list of properties
+- `get_property/2` - Get single property by ID
+
+### Properties Module: `HospitableClient.Properties`
+
+- `get_properties/1` - Get paginated list of properties with full options
+- `get_property/2` - Get single property by ID with options
+- `get_all_properties/1` - Get all properties across all pages
+- `list_amenities/1` - Extract unique amenities from properties
+- `list_property_types/1` - Extract unique property types from properties
+- `list_currencies/1` - Extract unique currencies from properties
+- `filter_properties/2` - Filter properties by various criteria
+- `group_properties/2` - Group properties by a specific field
 
 ### Authentication: `HospitableClient.Auth.Manager`
 

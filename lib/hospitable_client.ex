@@ -31,6 +31,7 @@ defmodule HospitableClient do
 
   alias HospitableClient.Auth.Manager, as: AuthManager
   alias HospitableClient.HTTP.Client
+  alias HospitableClient.Properties
 
   @doc """
   Sets the authentication token for API requests.
@@ -151,5 +152,49 @@ defmodule HospitableClient do
   @spec delete(String.t()) :: {:ok, map()} | {:error, term()}
   def delete(path) do
     Client.delete(path)
+  end
+
+  ## Properties API
+
+  @doc """
+  Retrieves a paginated list of properties.
+
+  This is a convenience function that delegates to `HospitableClient.Properties.get_properties/1`.
+  For more advanced property operations, use the `HospitableClient.Properties` module directly.
+
+  ## Examples
+
+      iex> HospitableClient.get_properties()
+      {:ok, %{"data" => [...], "meta" => %{"total" => 45}}}
+
+      iex> HospitableClient.get_properties(%{page: 2, per_page: 25})
+      {:ok, %{"data" => [...], "meta" => %{"current_page" => 2}}}
+
+      iex> HospitableClient.get_properties(%{include: "listings,user"})
+      {:ok, %{"data" => [...], "included" => [...]}}
+
+  """
+  @spec get_properties(map()) :: {:ok, map()} | {:error, term()}
+  def get_properties(opts \\ %{}) do
+    Properties.get_properties(opts)
+  end
+
+  @doc """
+  Retrieves a single property by ID.
+
+  This is a convenience function that delegates to `HospitableClient.Properties.get_property/2`.
+
+  ## Examples
+
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000")
+      {:ok, %{"data" => %{"id" => "550e8400-e29b-41d4-a716-446655440000", ...}}}
+
+      iex> HospitableClient.get_property("550e8400-e29b-41d4-a716-446655440000", %{include: "listings"})
+      {:ok, %{"data" => %{...}, "included" => [...]}}
+
+  """
+  @spec get_property(String.t(), map()) :: {:ok, map()} | {:error, term()}
+  def get_property(property_id, opts \\ %{}) do
+    Properties.get_property(property_id, opts)
   end
 end
